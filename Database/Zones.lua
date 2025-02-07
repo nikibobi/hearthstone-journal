@@ -21,13 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local _, SJ = ...
+local _, HJ = ...
 
 -- Map name resolution
 local nameCache = {}
 local GetMapInfo = C_Map.GetMapInfo
 
-function SJ:GetMapName(mapID)
+function HJ:GetMapName(mapID)
     if not nameCache[mapID] then
         local mapInfo = GetMapInfo(mapID)
         nameCache[mapID] = mapInfo.name

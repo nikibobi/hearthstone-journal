@@ -21,9 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local _, SJ = ...
+local _, HJ = ...
 
-SJ.UIFactory = SJ.UIFactory or { }
+HJ.UIFactory = HJ.UIFactory or { }
 
 local function InitializeFilterDropDown(_, level, menuList)
 
@@ -34,8 +34,8 @@ local function InitializeFilterDropDown(_, level, menuList)
         info.isNotRadio = true
         info.keepShownOnClick = true
         info.func = function(_, _, _, checked)
-            SJ.Filters:SetFilter(filter, checked)
-            SJ.Panel.ScrollFrame:UpdateButtons()
+            HJ.Filters:SetFilter(filter, checked)
+            HJ.Panel.ScrollFrame:UpdateButtons()
         end
         UIDropDownMenu_AddButton(info, level)
     end
@@ -59,7 +59,7 @@ local function InitializeFilterDropDown(_, level, menuList)
 
     if level == 1 then
         local insertSpace = false
-        for _, filterGroup in ipairs(SJ.Filters:GetFilters()) do
+        for _, filterGroup in ipairs(HJ.Filters:GetFilters()) do
             if insertSpace then
                 UIDropDownMenu_AddSpace(level)
                 insertSpace = false
@@ -85,7 +85,7 @@ local function InitializeFilterDropDown(_, level, menuList)
     end
 end
 
-function SJ.UIFactory:CreateFilterDropDown(panel)
+function HJ.UIFactory:CreateFilterDropDown(panel)
     local dropDownMenu = CreateFrame("FRAME", nil, panel, "UIDropDownMenuTemplate")
     UIDropDownMenu_Initialize(dropDownMenu, InitializeFilterDropDown, "MENU")
 

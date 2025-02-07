@@ -21,25 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local ADDON_NAME, SJ = ...
+local ADDON_NAME, HJ = ...
 
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, true)
 
-local function matchBuild(targetBuild)
-    return function(soulshape)
-        return soulshape.buildNumber == targetBuild
-    end
-end
-
 local function isCollected(value)
-    return function(soulshape)
-        return (soulshape.collected or false) == value
-    end
-end
-
-local function isCritter(value)
-    return function(soulshape)
-        return (soulshape.critter or false) == value
+    return function(hearthstone)
+        return (hearthstone.collected or false) == value
     end
 end
 
@@ -60,92 +48,67 @@ local filters = {
         }
     },
     {
-        label = TYPE,
-        filters = {
-            {
-                label = L["Soulshape"],
-                enabled = true,
-                func = isCritter(false)
-            },
-            {
-                label = L["Crittershape"],
-                enabled = true,
-                func = isCritter(true)
-            }
-        }
-    },
-    {
         label = SOURCES,
         subMenu = true,
         filters = {
             {
                 label = L["Loot"],
                 enabled = true,
-                func = function(soulshape)
-                    return soulshape.loot ~= nil
+                func = function(hearthstone)
+                    return hearthstone.loot ~= nil
                 end
             },
             {
                 label = L["Quest"],
                 enabled = true,
-                func = function(soulshape)
-                    return soulshape.quest ~= nil or soulshape.campaignQuest ~= nil
+                func = function(hearthstone)
+                    return hearthstone.quest ~= nil or hearthstone.campaignQuest ~= nil
                 end
             },
             {
                 label = L["Vendor"],
                 enabled = true,
-                func = function(soulshape)
-                    return soulshape.vendor ~= nil
+                func = function(hearthstone)
+                    return hearthstone.vendor ~= nil
                 end
             },
             {
                 label = L["NPC"],
                 enabled = true,
-                func = function(soulshape)
-                    return soulshape.npc ~= nil
+                func = function(hearthstone)
+                    return hearthstone.npc ~= nil
                 end
             },
             {
                 label = L["World Event"],
                 enabled = true,
-                func = function(soulshape)
-                    return soulshape.worldEvent ~= nil
+                func = function(hearthstone)
+                    return hearthstone.worldEvent ~= nil
+                end
+            },
+            {
+                label = L["TCG"],
+                enabled = true,
+                func = function(hearthstone)
+                    return hearthstone.tcgCard ~= nil or hearthstone.tcgExpansion
+                end
+            },
+            {
+                label = L["Promotion"],
+                enabled = true,
+                func = function(hearthstone)
+                    return hearthstone.promotion ~= nil
+                end
+            },
+            {
+                label = L["Achievement"],
+                enabled = true,
+                func = function(hearthstone)
+                    return hearthstone.achievement ~= nil
                 end
             }
         }
     },
-    {
-        label = L["Available since"],
-        subMenu = true,
-        filters = {
-            {
-                label = "9.0",
-                enabled = true,
-                func = matchBuild(SJ.BUILD_9_0)
-            },
-            {
-                label = "9.0.5",
-                enabled = true,
-                func = matchBuild(SJ.BUILD_9_0_5)
-            },
-            {
-                label = "9.1",
-                enabled = true,
-                func = matchBuild(SJ.BUILD_9_1)
-            },
-            {
-                label = "9.1.5",
-                enabled = true,
-                func = matchBuild(SJ.BUILD_9_1_5)
-            },
-            {
-                label = "9.2",
-                enabled = true,
-                func = matchBuild(SJ.BUILD_9_2)
-            }
-        }
-    }
 }
 
 local function AllFiltersEnabled()
@@ -159,12 +122,12 @@ local function AllFiltersEnabled()
     return true
 end
 
-local function IsRetained(soulshape)
+local function IsRetained(hearthstone)
     local isShown = true
     for _, filterGroup in ipairs(filters) do
         local isShownForGroup = true
         for _, filter in ipairs(filterGroup.filters) do
-            if filter.func(soulshape) then
+            if filter.func(hearthstone) then
                 isShownForGroup = isShownForGroup and filter.enabled
             end
         end
@@ -173,46 +136,46 @@ local function IsRetained(soulshape)
     return isShown
 end
 
-SJ.Filters = {
+HJ.Filters = {
     textFilter = nil
 }
 
-function SJ.Filters:SetTextFilter(textFilter)
+function HJ.Filters:SetTextFilter(textFilter)
     self.textFilter = textFilter
 end
 
 --- Enables or disables a drop-down filter
-function SJ.Filters:SetFilter(filter, value)
+function HJ.Filters:SetFilter(filter, value)
     filter.enabled = value
 end
 
 --- Returns the list of all drop-down filters
-function SJ.Filters:GetFilters()
+function HJ.Filters:GetFilters()
     return filters
 end
 
---- Filters a collection of soulshapes based on drop-down filters and a text filter
-function SJ.Filters:Filter(soulshapes)
+--- Filters a collection of hearthstones based on drop-down filters and a text filter
+function HJ.Filters:Filter(hearthstones)
     if (self.textFilter == nil or self.textFilter == "") and AllFiltersEnabled() then
         -- No filtering active, do nothing
-        return soulshapes
+        return hearthstones
     end
 
-    local filteredSoulshapes = {}
-    for _, soulshape in ipairs(soulshapes) do
+    local filteredHearthstones = {}
+    for _, hearthstone in ipairs(hearthstones) do
         local isShown = false
 
         -- Dropdown filters
-        isShown = isShown or IsRetained(soulshape)
+        isShown = isShown or IsRetained(hearthstone)
 
         -- Text filter
         if self.textFilter and self.textFilter ~= "" then
-            isShown = isShown and soulshape.searchText:find(self.textFilter:lower(), 1, true)
+            isShown = isShown and hearthstone.searchText:find(self.textFilter:lower(), 1, true)
         end
 
         if isShown then
-            tinsert(filteredSoulshapes, soulshape)
+            tinsert(filteredHearthstones, hearthstone)
         end
     end
-    return filteredSoulshapes
+    return filteredHearthstones
 end

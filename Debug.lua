@@ -21,14 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local ADDON_NAME, SJ = ...
+local ADDON_NAME, HJ = ...
 
 -- Debug module, not for regular use
-local Debug = SJ:NewModule("DebugTools", "AceConsole-3.0")
+local Debug = HJ:NewModule("DebugTools", "AceConsole-3.0")
 
 function Debug:OnInitialize()
     -- Allows fishing for SpellVisualKit ids
-    self:RegisterChatCommand("sj_kit", function(input)
+    self:RegisterChatCommand("hj_kit", function(input)
         if input == "+" then
             self.lastID = self.lastID + 1
         elseif input == "-" then
@@ -41,16 +41,16 @@ function Debug:OnInitialize()
     end)
 
     -- Sets the ModelSceneID in the 3D view
-    self:RegisterChatCommand("sj_msi", function(input)
+    self:RegisterChatCommand("hj_msi", function(input)
         local modelSceneID = tonumber(input)
-        local scene = SJ.Panel.SoulshapeDisplay.ModelScene
+        local scene = HJ.Panel.SoulshapeDisplay.ModelScene
         scene:SetFromModelSceneID(modelSceneID, true, false)
     end)
 
     -- Sets the scale in the 3D view
-    self:RegisterChatCommand("sj_scale", function(input)
+    self:RegisterChatCommand("hj_scale", function(input)
         local scale = tonumber(input)
-        local scene = SJ.Panel.SoulshapeDisplay.ModelScene
+        local scene = HJ.Panel.SoulshapeDisplay.ModelScene
         local actor = scene:GetActorByTag("unwrapped")
         actor:SetRequestedScale(scale)
     end)

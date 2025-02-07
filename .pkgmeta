@@ -1,4 +1,4 @@
-package-as: SoulshapeJournal
+package-as: HearthstoneJournal
 
 ignore:
     - Debug.lua

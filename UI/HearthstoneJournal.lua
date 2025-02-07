@@ -21,15 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local ADDON_NAME, SJ = ...
+local ADDON_NAME, HJ = ...
 
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME)
 
-local NIGHT_FAE = Enum.CovenantType["NightFae"]
-
 local CollectionPanelMixin = {
-    selectedSoulshape = nil,
-    onSoulshapeChangeCallbacks = {},
+    selectedHearthstone = nil,
+    onHearthstoneChangeCallbacks = {},
 }
 
 local function CreateInsets(panel)
@@ -65,29 +63,13 @@ local function CreateCount(panel)
     panel.Count = countNumber
 end
 
-local function CreateCovenantWarning(panel)
-    local warningFrame = CreateFrame("Frame", nil, panel)
-    -- This positioning is super ugly, but it does the job, don't do this at home
-    warningFrame:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -10, -28)
-    warningFrame:SetSize(395, 30)
-    local warningLabel = warningFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    warningLabel:SetText(L["WARNING_NOT_NIGHT_FAE"])
-    warningLabel:SetJustifyH("LEFT")
-    warningLabel:SetAllPoints()
-    warningLabel:Hide()
-
-    panel.CovenantWarning = warningLabel
-end
-
 local function CreateScrollFrame(panel)
 
     local ScrollFrameMixin = {}
 
     function ScrollFrameMixin:ResetButton(button)
         button.name:SetText("")
-        button.icon:SetTexture(C_Spell.GetSpellTexture(310143))
-        button.critterIcon:Hide()
-        button.untrackableAddButton:Hide()
+        button.icon:SetTexture(C_Spell.GetSpellTexture(131128))
         button.selectedTexture:Hide()
         button.selected = false
         button:SetEnabled(false)
@@ -97,15 +79,15 @@ local function CreateScrollFrame(panel)
     end
 
     function ScrollFrameMixin:CreateButtons()
-        HybridScrollFrame_CreateButtons(self, "SoulshapeListButtonTemplate", 44, 0)
+        HybridScrollFrame_CreateButtons(self, "HearthstoneListButtonTemplate", 44, 0)
     end
 
     function ScrollFrameMixin:UpdateButtons()
         local buttons = HybridScrollFrame_GetButtons(self)
         local offset = HybridScrollFrame_GetOffset(self)
-        local buttonHeight;
+        local buttonHeight
 
-        local filteredItems = SJ.Filters:Filter(SJ.Database.soulshapes)
+        local filteredItems = HJ.Filters:Filter(HJ.Database.hearthstones)
 
         for index = 1, #buttons do
             local button = buttons[index]
@@ -117,23 +99,25 @@ local function CreateScrollFrame(panel)
                 local item = filteredItems[itemIndex]
                 button.name:SetText(item.name)
                 button.icon:SetTexture(item.icon)
-                button.soulshape = item
+                button.hearthstone = item
 
                 if item.collected then
                     button.icon:SetAlpha(1)
                     button.icon:SetDesaturated(false)
                     button.name:SetFontObject("GameFontNormal")
-                    button.background:SetVertexColor(1, 1, 1, 1);
+                    button.background:SetVertexColor(1, 1, 1, 1)
+                    button:RegisterForDrag("LeftButton")
+                    button:SetScript("OnDragStart", function()
+                        C_ToyBox.PickupToyBoxItem(item.itemID)
+                    end)
                 else
                     button.icon:SetAlpha(0.25)
                     button.icon:SetDesaturated(true)
                     button.name:SetFontObject("GameFontDisable")
+                    button:SetScript("OnDragStart", nil)
                 end
 
-                button.critterIcon:SetShown(item.critter)
-                button.untrackableAddButton:SetShown(not item.collected and item.untrackable)
-
-                button.selected = panel.selectedSoulshape == item
+                button.selected = panel.selectedHearthstone == item
                 button.selectedTexture:SetShown(button.selected)
 
                 button:SetEnabled(true)
@@ -148,7 +132,7 @@ local function CreateScrollFrame(panel)
     local scrollFrame = Mixin(CreateFrame("ScrollFrame", "$parentScrollFrame", panel, "HybridScrollFrameTemplate"), ScrollFrameMixin)
     scrollFrame:SetPoint("TOPLEFT", panel.LeftInset, "TOPLEFT", 3, -36)
     scrollFrame:SetPoint("BOTTOMRIGHT", panel.LeftInset, "BOTTOMRIGHT", -3, 5)
-    scrollFrame.items = SJ.Database.soulshapes
+    scrollFrame.items = HJ.Database.hearthstones
 
     local scrollBar = CreateFrame("Slider", "$parentScrollBar", scrollFrame, "HybridScrollBarTemplate")
     scrollBar:SetPoint("TOPLEFT", panel.LeftInset, "TOPRIGHT", 1, -16)
@@ -164,73 +148,69 @@ local function CreateScrollFrame(panel)
 end
 
 local function CreateModelView(panel)
-    local soulshapeDisplay = CreateFrame("Frame", nil, panel)
-    soulshapeDisplay:SetPoint("TOPLEFT", panel.RightInset, "TOPLEFT", 3, -3)
-    soulshapeDisplay:SetPoint("BOTTOMRIGHT", panel.RightInset, "BOTTOMRIGHT", -3, 3)
+    local hearthstoneDisplay = CreateFrame("Frame", nil, panel)
+    hearthstoneDisplay:SetPoint("TOPLEFT", panel.RightInset, "TOPLEFT", 3, -3)
+    hearthstoneDisplay:SetPoint("BOTTOMRIGHT", panel.RightInset, "BOTTOMRIGHT", -3, 3)
 
-    local background = soulshapeDisplay:CreateTexture(nil, "BACKGROUND")
+    local background = hearthstoneDisplay:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetTexture("Interface/CovenantChoice/CovenantChoiceOfferingsNightFae")
-    background:SetTexCoord(0.0434117648, 0.3608851102, 0.427734375, 0.8486328125)
+    background:SetTexture("Interface/Collections/CollectionsBackgroundTile")
+    -- background:SetTexCoord(0.0434117648, 0.3608851102, 0.427734375, 0.8486328125)
 
-    local shadow = CreateFrame("Frame", nil, soulshapeDisplay, "ShadowOverlayTemplate")
+    local shadow = CreateFrame("Frame", nil, hearthstoneDisplay, "ShadowOverlayTemplate")
     shadow:Lower()
     shadow:SetAllPoints()
 
-    local soulshapeInfo = CreateFrame("Frame", nil, soulshapeDisplay)
-    soulshapeInfo:SetPoint("TOPLEFT", 20, -20)
-    soulshapeInfo:SetPoint("BOTTOMRIGHT", -20, 20)
+    local hearthstoneInfo = CreateFrame("Frame", nil, hearthstoneDisplay)
+    hearthstoneInfo:SetPoint("TOPLEFT", 20, -20)
+    hearthstoneInfo:SetPoint("BOTTOMRIGHT", -20, 20)
 
     -- FIXME: extract this
-    local bannerLeft = soulshapeInfo:CreateTexture(nil, "ARTWORK")
+    local bannerLeft = hearthstoneInfo:CreateTexture(nil, "ARTWORK")
     bannerLeft:SetPoint("TOPLEFT", 0, 5)
     bannerLeft:SetAtlas("UI-Frame-NightFae-TitleLeft", false)
     bannerLeft:SetSize(100, 42)
 
-    local bannerRight = soulshapeInfo:CreateTexture(nil, "ARTWORK")
-    bannerRight:SetPoint("TOPRIGHT", soulshapeInfo, "TOPRIGHT", 0, 5)
+    local bannerRight = hearthstoneInfo:CreateTexture(nil, "ARTWORK")
+    bannerRight:SetPoint("TOPRIGHT", hearthstoneInfo, "TOPRIGHT", 0, 5)
     bannerRight:SetAtlas("UI-Frame-NightFae-TitleRight", false)
     bannerRight:SetSize(100, 42)
 
-    local bannerMid = soulshapeInfo:CreateTexture(nil, "ARTWORK")
+    local bannerMid = hearthstoneInfo:CreateTexture(nil, "ARTWORK")
     bannerMid:SetPoint("TOPLEFT", bannerLeft, "TOPRIGHT")
     bannerMid:SetPoint("BOTTOMRIGHT", bannerRight, "BOTTOMLEFT")
     bannerMid:SetAtlas("_UI-Frame-NightFae-TitleMiddle", false)
 
-    local infoName = soulshapeInfo:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge2")
+    local infoName = hearthstoneInfo:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge2")
     infoName:SetPoint("TOPLEFT", 0, 0)
     infoName:SetPoint("TOPRIGHT", 0, 0)
     infoName:SetSize(0, 35)
     infoName:SetJustifyH("CENTER")
     panel.Name = infoName
 
-    local infoSource = soulshapeInfo:CreateFontString(nil, "OVERLAY", "GameFontHighlightMedium")
+    local infoSource = hearthstoneInfo:CreateFontString(nil, "OVERLAY", "GameFontHighlightMedium")
     infoSource:SetJustifyH("LEFT")
     infoSource:SetPoint("TOPLEFT", infoName, "BOTTOMLEFT", 20, -10)
     infoSource:SetPoint("TOPRIGHT", infoName, "BOTTOMRIGHT", -20, -10)
     infoSource:SetWordWrap(true)
     panel.Source = infoSource
 
-    local infoGuide = soulshapeInfo:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local infoGuide = hearthstoneInfo:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     infoGuide:SetJustifyH("LEFT")
     infoGuide:SetPoint("TOPLEFT", infoSource, "BOTTOMLEFT", 0, -5)
     infoGuide:SetPoint("TOPRIGHT", infoSource, "BOTTOMRIGHT", 0, -5)
     infoGuide:SetWordWrap(true)
     panel.Guide = infoGuide
 
-    local modelScene = CreateFrame("ModelScene", nil, soulshapeDisplay, "WrappedAndUnwrappedModelScene")
+    local modelScene = CreateFrame("ModelScene", nil, hearthstoneDisplay, "WrappedAndUnwrappedModelScene")
     modelScene:Lower()
-    modelScene:SetPoint("TOPLEFT", 0, -80)
-    modelScene:SetPoint("BOTTOMRIGHT", 0, 40)
-    modelScene.RotateLeftButton = CreateFrame("Button", nil, modelScene, "RotateOrbitCameraLeftButtonTemplate")
-    modelScene.RotateLeftButton:SetPoint("TOPRIGHT", modelScene, "BOTTOM", -5, 20)
-    modelScene.RotateRightButton = CreateFrame("Button", nil, modelScene, "RotateOrbitCameraRightButtonTemplate")
-    modelScene.RotateRightButton:SetPoint("TOPLEFT", modelScene, "BOTTOM", 5, 20)
+    modelScene:SetPoint("TOPLEFT", infoGuide, "BOTTOMLEFT", -3, -3)
+    modelScene:SetPoint("BOTTOMRIGHT", panel.RightInset, "BOTTOMRIGHT", -3, 3)
     modelScene:Hide()
 
-    soulshapeDisplay.ModelScene = modelScene
+    hearthstoneDisplay.ModelScene = modelScene
 
-    panel.SoulshapeDisplay = soulshapeDisplay
+    panel.HearthstoneDisplay = hearthstoneDisplay
 end
 
 local function CreateSearchBox(panel)
@@ -240,7 +220,7 @@ local function CreateSearchBox(panel)
     editBox.letters = 40
     editBox:SetScript("OnTextChanged", function(self)
         SearchBoxTemplate_OnTextChanged(self)
-        SJ.Filters:SetTextFilter(self:GetText())
+        HJ.Filters:SetTextFilter(self:GetText())
         panel.ScrollFrame:UpdateButtons()
     end)
     editBox:SetScript("OnHide", function(self)
@@ -268,130 +248,122 @@ local function CreateTab(panel)
     panel.Tab = tab
 end
 
-function CollectionPanelMixin:UpdateSoulshapeDisplay()
-    local scene = self.SoulshapeDisplay.ModelScene
+function CollectionPanelMixin:UpdateHearthstoneDisplay()
+    local scene = self.HearthstoneDisplay.ModelScene
 
-    local function showModel(creatureDisplayID, scale, modelSceneID, animation)
-        scene:SetFromModelSceneID(modelSceneID, true, false)
-        local actor = scene:GetActorByTag("unwrapped")
-        if actor then
-            actor:SetModelByCreatureDisplayID(creatureDisplayID)
-            if scale then
-                actor:SetRequestedScale(scale)
+    local function showModel(spellVisualKit, animation, transmogItemId)
+
+        local function shouldUseNativeForm()
+            local hasAlternateForm, inAlternateForm = C_PlayerInfo.GetAlternateFormInfo()
+            local _, raceFilename = UnitRace("Player")
+            if raceFilename == "Dracthyr" or raceFilename == "Worgen" then
+                return not (hasAlternateForm and inAlternateForm)
             end
+
+            return true
+        end
+
+        local modelSceneID = 44
+        scene:SetFromModelSceneID(modelSceneID, true, false)
+
+        local actor = scene:GetPlayerActor()
+        if actor then
+            local useNativeForm = shouldUseNativeForm()
+
+            actor:SetModelByUnit("player", false, true, true, useNativeForm)
+            actor:SetPosition(0, 0, -0.5)
+            actor:SetRequestedScale(3)
+
+            if spellVisualKit then
+                actor:SetSpellVisualKit(spellVisualKit)
+            end
+
             if animation then
                 actor:SetAnimation(animation, 0)
+            end
+
+            if transmogItemId then
+                actor:TryOn(string.format("item:%d", transmogItemId))
             end
         end
         scene:Show()
     end
 
     local function enableUserControls(enabled)
-        scene.RotateLeftButton:SetShown(enabled)
-        scene.RotateRightButton:SetShown(enabled)
         scene:EnableMouse(enabled)
         scene:EnableMouseWheel(enabled)
     end
 
-    local soulshape = self.selectedSoulshape
-    if soulshape then
+    local hearthstone = self.selectedHearthstone
+    if hearthstone then
         enableUserControls(true)
-        self.Name:SetText(soulshape.name)
-        self.Source:SetText(soulshape.source)
-        self.Guide:SetText(soulshape.guide)
-        showModel(soulshape.model, soulshape.scale, soulshape.modelSceneID or 44)
+        self.Name:SetText(hearthstone.name)
+        self.Source:SetText(hearthstone.source)
+        self.Guide:SetText(hearthstone.guide)
+        showModel(hearthstone.spellVisualKit or 108131, hearthstone.animation or 51, hearthstone.transmogItemId)
     else
         -- Default display
-        enableUserControls(false)
-        self.Name:SetText(L["Soulshape Journal"])
-        -- Running Vulpine!
-        showModel(93949, 4, 4, 5)
+        enableUserControls(true)
+        self.Name:SetText(L["Hearthstone Journal"])
+        showModel(108131, 51, nil)
     end
 end
 
-function CollectionPanelMixin:ShowUntrackableTooltip(addButton)
-    local soulshape = addButton:GetParent().soulshape
-    GameTooltip:SetOwner(addButton, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(string.format("|A:services-icon-warning:16:16|a |cFFFFFFFF%s|r", L["UNTRACKABLE_TOOLTIP_TITLE"]))
-    GameTooltip:AddLine(string.format(L["UNTRACKABLE_TOOLTIP_CLICK_ME"], NIGHT_FAE_BLUE_COLOR:WrapTextInColorCode(soulshape.name)))
-    GameTooltip:Show()
-end
-
 function CollectionPanelMixin:UpdateCount()
-    self.Count:SetText(SJ.Database:CountCollected() .. "/" .. SJ.Database:CountTotal())
-end
-
-function CollectionPanelMixin:UpdateCovenantWarning()
-    local covenant = C_Covenants.GetActiveCovenantID()
-    self.CovenantWarning:SetShown(covenant ~= NIGHT_FAE)
+    self.Count:SetText(HJ.Database:CountCollected() .. "/" .. HJ.Database:CountTotal())
 end
 
 function CollectionPanelMixin:OnButtonClick(button)
-    self.selectedSoulshape = button.soulshape
-    self:UpdateSoulshapeDisplay()
+    self.selectedHearthstone = button.hearthstone
+    self:UpdateHearthstoneDisplay()
 
     -- FIXME: move this to callbacks
     self.ScrollFrame:UpdateButtons()
 
     -- callbacks for other components
-    self:SoulshapeChanged(button.soulshape)
+    self:HearthstoneChanged(button.hearthstone)
 end
 
---- Callback signature: callback(soulshape)
-function CollectionPanelMixin:OnSoulshapeChange(callback)
-    tinsert(self.onSoulshapeChangeCallbacks, callback)
+--- Callback signature: callback(hearthstone)
+function CollectionPanelMixin:OnHearthstoneChange(callback)
+    tinsert(self.onHearthstoneChangeCallbacks, callback)
 end
 
-function CollectionPanelMixin:SoulshapeChanged(soulshape)
-    --SJ:Print("Panel:SoulshapeChanged")
-    for _, callback in ipairs(self.onSoulshapeChangeCallbacks) do
-        callback(soulshape)
+function CollectionPanelMixin:HearthstoneChanged(hearthstone)
+    --HJ:Print("Panel:HearthstoneChanged")
+    for _, callback in ipairs(self.onHearthstoneChangeCallbacks) do
+        callback(hearthstone)
     end
 end
 
 --- FIXME Remove this
-function CollectionPanelMixin:GetSelectedSoulshape()
-    return self.selectedSoulshape
-end
-
-function CollectionPanelMixin:AddUntrackableToCollection(addButton)
-    local soulshape = addButton:GetParent().soulshape
-    if SJ.Database:AddUntrackable(soulshape) then
-        self:Update()
-    end
+function CollectionPanelMixin:GetSelectedHearthstone()
+    return self.selectedHearthstone
 end
 
 -- Called when journal is shown
 function CollectionPanelMixin:Update()
-    SJ.Database:Update()
+    HJ.Database:Update()
     self.ScrollFrame:UpdateButtons()
-    self:UpdateSoulshapeDisplay()
+    self:UpdateHearthstoneDisplay()
     self:UpdateCount()
-    self:UpdateCovenantWarning()
 end
 
-function SJ:CreateCollectionPanel()
-    local panel = Mixin(CreateFrame("Frame", "SoulshapeCollectionPanel", CollectionsJournal, "PortraitFrameTemplate"), CollectionPanelMixin)
+function HJ:CreateCollectionPanel()
+    local panel = Mixin(CreateFrame("Frame", "HearthstoneCollectionPanel", CollectionsJournal, "PortraitFrameTemplate"), CollectionPanelMixin)
     panel:Hide()
     panel:SetAllPoints()
-    panel:SetPortraitToAsset(C_Spell.GetSpellTexture(310143))
+    panel:SetPortraitToAsset(C_Spell.GetSpellTexture(131128))
     panel:SetTitle(L["TAB_TITLE"])
 
-    SJ.Panel = panel
+    HJ.Panel = panel
 
     CreateInsets(panel)
     CreateCount(panel)
-    CreateCovenantWarning(panel)
     CreateScrollFrame(panel)
     CreateModelView(panel)
     CreateSearchBox(panel)
-    SJ.UIFactory:CreateFilterDropDown(panel)
-
-    -- Map
-    panel.Map = SJ.UIFactory:CreateMap(panel, panel.RightInset)
-    panel:OnSoulshapeChange(function(soulshape)
-        panel.Map:OnSoulshapeChange(soulshape)
-    end)
+    HJ.UIFactory:CreateFilterDropDown(panel)
 
     CreateTab(panel)
 
@@ -400,6 +372,6 @@ function SJ:CreateCollectionPanel()
     end)
 end
 
-function SJ:GetSelectedSoulshape()
-    return self.Panel:GetSelectedSoulshape()
+function HJ:GetSelectedHearthstone()
+    return self.Panel:GetSelectedHearthstone()
 end

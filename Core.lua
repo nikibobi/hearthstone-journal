@@ -21,21 +21,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local ADDON_NAME, SC = ...
-local SoulshapeJournal = LibStub("AceAddon-3.0"):NewAddon(SC, ADDON_NAME, "AceConsole-3.0")
+local ADDON_NAME, HJ = ...
+local HearthstoneJournal = LibStub("AceAddon-3.0"):NewAddon(HJ, ADDON_NAME, "AceConsole-3.0")
 
-function SoulshapeJournal:OnInitialize()
-    self.saved = LibStub("AceDB-3.0"):New("SoulshapeJournalDB", {
-        char = {
-            collectedUntrackable = {
-                ["corgi"] = false,
-                ["catwellfed"] = false,
-            },
-        },
-    })
+function HearthstoneJournal:OnInitialize()
+    -- self.saved = LibStub("AceDB-3.0"):New("HearthstoneJournalDB", {
+    --     char = {
+    --         favoriteId = nil
+    --     },
+    -- })
 end
 
-function SoulshapeJournal:OnEnable()
+function HearthstoneJournal:OnEnable()
     self:CreateDatabase()
 
     -- Fixes an issue when our addon loads before Blizzard_Collections

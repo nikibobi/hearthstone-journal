@@ -1,0 +1,27 @@
+## Interface: 110002
+## Version: 1.0.0
+## IconTexture: 413582
+## Title: Hearthstone Journal
+## Notes: Displays hearthstone toys as a collection journal
+## Author: Bosak
+## X-Website: https://github.com/nikibobi/HearthstoneJournal/
+## X-Curse-Project-ID: 550045
+## SavedVariables: HearthstoneJournalDB
+
+Libs\LibStub\LibStub.lua
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\SecureTabs-2.0\SecureTabs-2.0.lua
+
+Localization\enUS.lua
+
+Database\Zones.lua
+Database\HearthstoneDatabase.lua
+Database\Filters.lua
+
+UI\Templates.xml
+UI\FilterDropDown.lua
+UI\HearthstoneJournal.lua
+Core.lua
